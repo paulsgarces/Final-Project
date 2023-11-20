@@ -50,10 +50,10 @@ server <- function(input, output) {
 
   output$textOutput <- renderText({
     "From the Central Park Squirrel Census CSV from 2018, I explored the relationship between the ages of the squirrels 
-    and the level of activities. I specifically used a stacked bar plot because I was considering 4 varibales/activites
-    which when plotting, would cause too much information being presnted on a plot if using another type of visualization
-    In terms of age, squirrels were classified by only two age groups, Adults and Juveniles. Adults being one year plus in 
-    age and juveniles being up to six months old. Now in terms of activities I specifically looked at running, chasing, climbing, 
+    and the level of activities. I specifically used a stacked bar plot because I was considering 4 variables/activites
+    which when plotting, would cause too much information to be presnted on a plot if using another type of visualization
+    In terms of age, squirrels were classified by only two age groups, Adults and Juveniles. Adults are one year plus in 
+    age and juveniles are up to six months old. Now in terms of activities I specifically looked at running, chasing, climbing, 
     eating, and foraging. From the stacked bar plot, it can be seen that adult squirrels had higher activity levels compared to
     juvenile squirrels across all the activities that were being factored."
   })
