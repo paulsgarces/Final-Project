@@ -22,5 +22,15 @@ hours, Climbing was the second highest activity with running behind it, and chas
 hours, Eating is the second highest activity done by the squirrels with Running behind it, while Chasing once again is the least
 activity done.
 
+For the third visualization I'm looking at the relationship between the location at which the squirrels are being located
+and the activity level of the squirrels. In order to do this visualization, I needed to group all the Above Ground and Ground
+PLane rows in the dataset and then depending on the status of these values, I calculated the count for each activity for that 
+specific row/squirrel. In the visualization, when looking at the Above Ground value it can be seen that Climbing was the highest
+activity level with Running and Eating as a close second between squirrels, and Chasing as the lowest activity level between 
+squirrels. When looking at the Ground Plane value under the Location variable, it can be noted that Foraging is the activity
+that squirrels tend to do the most on the ground, with Eating as a close second and running as the third highest activity done by
+squirrels. It must also be noted that Climbing, which was the most done activity above ground, is the lowest activity done when on
+the ground level.
+
 Link to download CSV: 
 https://catalog.data.gov/dataset/2018-central-park-squirrel-census-squirrel-data
