@@ -14,5 +14,13 @@ squirrels had higher activity levels across the board when compared to juvenile 
 little activity. This can be attributed to the fact that juvenile squirrels are too young to be doing activities
 such as foraging and climbing. 
 
+For the second visualization I'm looking at the relationship between the hours at which the squirrels are being observed and 
+the activity level of the squirrels. In order to do this visualization, I needed to group all the AM and PM rows in the dataset
+and then depending on the AM or PM status, I calculated the count for each activity for that specific row. In the visualization
+it can be seen that Foraging, in both the AM and PM hours, is the highest activity for squirrels. However, when looking at the AM
+hours, Climbing was the second highest activity with running behind it, and chasing as the least activity done. Looking at the PM
+hours, Eating is the second highest activity done by the squirrels with Running behind it, while Chasing once again is the least
+activity done.
+
 Link to download CSV: 
 https://catalog.data.gov/dataset/2018-central-park-squirrel-census-squirrel-data
