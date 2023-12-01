@@ -32,6 +32,8 @@ that squirrels tend to do the most on the ground, with Eating as a close second 
 squirrels. It must also be noted that Climbing, which was the most done activity above ground, is the lowest activity done when on
 the ground level.
 
+For the first visualization in this repository, it stretches out the image of the plot even though I have reduced the size of it in my code.
+
 Link to download CSV: 
 https://catalog.data.gov/dataset/2018-central-park-squirrel-census-squirrel-data
 
