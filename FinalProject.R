@@ -25,6 +25,17 @@ shiftvalues <- newdf %>%
 shiftplot <- shiftvalues %>%
   gather(key = "Activity", value = "Count", -Shift)
 
+shiftplotam <- shiftplot[shiftplot$Shift == "AM", ]
+shiftplotpm <- shiftplot[shiftplot$Shift == "PM", ]
+
+shiftplotamorder <- shiftplotam %>%
+  arrange(desc(Count)) %>%
+  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+
+shiftplotpmorder <- shiftplotpm %>%
+  arrange(desc(Count)) %>%
+  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+
 locationvalues <- newdf %>%
   group_by(Location) %>%
   summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"),
@@ -33,20 +44,31 @@ locationvalues <- newdf %>%
 locationplot <- locationvalues %>%
   gather(key = "Activity", value = "Count", -Location)
 
+locationplotabove <- locationplot[locationplot$Location == "Above Ground", ]
+locationplotground <- locationplot[locationplot$Location == "Ground Plane", ]
+
+locationplotaboveorder <- locationplotabove %>%
+  arrange(desc(Count)) %>%
+  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+
+locationplotgroundorder <- locationplotground %>%
+  arrange(desc(Count)) %>%
+  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+
 ui <- fluidPage(
   navbarPage(
     title = "Squirrel Analysis",
-    tabPanel("Age Analysis", plotOutput("agePlot", width = "80%", height = "400px"), verbatimTextOutput("ageTextOutput")),
-    tabPanel("AM and PM Analysis", plotOutput("shiftPlot", width = "80%", height = "400px"), verbatimTextOutput("shiftTextOutput")),
-    tabPanel("Squirrel Location Analysis", plotOutput("locationPlot", width = "80%", height = "400px"), verbatimTextOutput("locationTextOutput"))
+    tabPanel("Age Analysis", plotOutput("agePlot", width = "55%", height = "400px"), verbatimTextOutput("ageTextOutput")),
+    tabPanel("AM and PM Analysis", plotOutput("shiftPlot", width = "55%", height = "400px"), verbatimTextOutput("shiftTextOutput")),
+    tabPanel("Squirrel Location Analysis", plotOutput("locationPlot", width = "55%", height = "400px"), verbatimTextOutput("locationTextOutput"))
   )
 )
 
 server <- function(input, output) {
   output$agePlot <- renderPlot({
     ggplot(ageplot, aes(x = Age, y = Count, fill = Activity)) + geom_bar(stat = "identity") + theme_minimal(base_size = 16) + 
-      theme(text = element_text(face = "bold")) + 
-      labs(title = "Looking at Age and Activity Levels Between Squirrels (Adults & Juveniles)", x = "Age Group", y = "Count") +
+      theme(text = element_text(face = "bold", size = 20)) + 
+      labs(title = "Looking at Age and Activity Levels Between Squirrels (Adults & Juveniles)", x = "Age Group", y = "Total Squirrel Count") +
       scale_fill_manual(
         values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1")
       )})
@@ -62,12 +84,12 @@ server <- function(input, output) {
   })
   
   output$shiftPlot <- renderPlot({
-    ggplot(shiftplot, aes(x = Shift, y = Count, fill = Activity)) + geom_bar(stat = "identity", position = position_dodge()) +
-      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold")) +
-      labs(title = "Activity Levels Between Squirrels (AM and PM)", x = "Shift", y = "Count") +
-      scale_fill_manual(
-        values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1")
-      )})
+    ggplot() +
+      geom_bar(data = shiftplotamorder, aes(x = Shift, y = Count, fill = Activity), stat = "identity", position = position_dodge()) +
+      geom_bar(data = shiftplotpmorder, aes(x = Shift, y = Count, fill = Activity), stat = "identity", position = position_dodge()) +
+      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) + labs(title = "Activity Levels Between Squirrels (AM and PM)", x = "Shift", y = "Count") +
+      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1"))
+  })
   
   output$shiftTextOutput <- renderText({
     "For the second visualization I'm looking at the relationship between the hours at which the squirrels are being observed and 
@@ -80,12 +102,12 @@ server <- function(input, output) {
   })
   
   output$locationPlot <- renderPlot({
-    ggplot(locationplot, aes(x = Location, y = Count, fill = Activity)) + geom_bar(stat = "identity", position = "dodge") +
-      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold")) +
+    ggplot() + geom_bar(data = locationplotaboveorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", 
+                        position = position_dodge()) + 
+      geom_bar(data = locationplotgroundorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", 
+               position = position_dodge()) +theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) +
       labs(title = "Squirrel Activity Levels Based on Location", x = "Location", y = "Count") +
-      scale_fill_manual(
-        values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1")
-      )
+      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1"))
   })
   
   output$locationTextOutput <- renderText({
