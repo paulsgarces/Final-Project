@@ -22,104 +22,160 @@ shiftvalues <- newdf %>%
   summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"), 
             Eating = sum(Eating == "true"), Foraging = sum(Foraging == "true"))
 
-shiftplot <- shiftvalues %>%
-  gather(key = "Activity", value = "Count", -Shift)
-
-shiftplotam <- shiftplot[shiftplot$Shift == "AM", ]
-shiftplotpm <- shiftplot[shiftplot$Shift == "PM", ]
-
-shiftplotamorder <- shiftplotam %>%
-  arrange(desc(Count)) %>%
-  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
-
-shiftplotpmorder <- shiftplotpm %>%
-  arrange(desc(Count)) %>%
-  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
-
-locationvalues <- newdf %>%
-  group_by(Location) %>%
-  summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"),
-            Eating = sum(Eating == "true"),Foraging = sum(Foraging == "true"))
-
-locationplot <- locationvalues %>%
-  gather(key = "Activity", value = "Count", -Location)
-
-locationplotabove <- locationplot[locationplot$Location == "Above Ground", ]
-locationplotground <- locationplot[locationplot$Location == "Ground Plane", ]
-
-locationplotaboveorder <- locationplotabove %>%
-  arrange(desc(Count)) %>%
-  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
-
-locationplotgroundorder <- locationplotground %>%
-  arrange(desc(Count)) %>%
-  mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
-
 ui <- fluidPage(
   navbarPage(
     title = "Squirrel Analysis",
-    tabPanel("Age Analysis", plotOutput("agePlot", width = "55%", height = "400px"), verbatimTextOutput("ageTextOutput")),
-    tabPanel("AM and PM Analysis", plotOutput("shiftPlot", width = "55%", height = "400px"), verbatimTextOutput("shiftTextOutput")),
-    tabPanel("Squirrel Location Analysis", plotOutput("locationPlot", width = "55%", height = "400px"), verbatimTextOutput("locationTextOutput"))
+    tabPanel("Introduction", titlePanel("How Do Surroundings and Characteristics Affect Squirrel's Acvitiy Level?"),
+             verbatimTextOutput("introText"), tableOutput("CSVsample")),
+    tabPanel("Age Analysis", 
+             selectInput("ageVariable", "Select Age Group", choices = c("All", unique(newdf$Age))),
+             plotOutput("agePlot", width = "55%", height = "550px"), 
+             verbatimTextOutput("ageTextOutput")),
+    tabPanel("AM and PM Analysis", 
+             selectInput("shiftVariable", "Select Shift", choices = c("All", unique(newdf$Shift))),
+             plotOutput("shiftPlot", width = "55%", height = "550px"), 
+             verbatimTextOutput("shiftTextOutput")),
+    tabPanel("Squirrel Location Analysis", 
+             selectInput("locationVariable", "Select Location", choices = c("All", unique(newdf$Location))),
+             plotOutput("locationPlot", width = "55%", height = "550px"), 
+             verbatimTextOutput("locationTextOutput"))
   )
 )
 
 server <- function(input, output) {
+  output$introText <- renderText({
+    "For the final project for the class, I decided to study how do squirrel's surroundings 
+    and characteristics influence/affect their activity level?. From the https://data.gov/ website, I used the 
+    CSV file called 2018_Central_Park_Squirrel_Census. As for the x variables/inputs for my graphs I decided to
+    use the age of the squirrels(Adults and Juveniles ), the shifts they were being studied during (AM and PM), 
+    as well as their location the squirrels were at during the observations (Above Ground and Ground Plane). I
+    found it fitting to use bar graphs for all graphs, as well as adding a dropdown widget to all graphs, allowing 
+    the user to compare side-by-side or individually across graphs.
+    Below is a list of sample variables in the CSV file being used:
+    - Unique Squirrel ID
+    - Hectare	
+    - Shift	
+    - Date	
+    - Hectare 
+    - Squirrel Number	
+    - Age
+    Additionally, there is a sample of 13 columns and 15 rows below demonstrating the CSV file in use."
+  })
+  
+  output$CSVsample <- renderTable({
+    head(select(squirrels_df, X,	Y,	Hectare,	Shift,	Date,	Hectare, Running, Chasing, Foraging, Eating,	Age, Kuks,	Quaas,	Moans), 15)
+  })
+  
   output$agePlot <- renderPlot({
-    ggplot(ageplot, aes(x = Age, y = Count, fill = Activity)) + geom_bar(stat = "identity") + theme_minimal(base_size = 16) + 
-      theme(text = element_text(face = "bold", size = 20)) + 
-      labs(title = "Looking at Age and Activity Levels Between Squirrels (Adults & Juveniles)", x = "Age Group", y = "Total Squirrel Count") +
+    filtered_df <- filter(newdf, if (input$ageVariable == "All") TRUE 
+                          else Age == input$ageVariable)
+    agevalues <- filtered_df %>%
+      group_by(Age) %>%
+      summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"), 
+                Eating = sum(Eating == "true"), Foraging = sum(Foraging == "true"))
+    ageplot <- agevalues %>%
+      gather(key = "Activity", value = "Count", -Age)
+    
+    ggplot(ageplot, aes(x = Age, y = Count, fill = Activity)) + geom_bar(stat = "identity") + 
+      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) + 
+      labs(title = paste("Looking at Age and Activity Levels Between Squirrels (", if (input$ageVariable == "All") "All" 
+                         else input$ageVariable, ")", sep = ""), 
+           x = "Age Group", y = "Total Squirrel Count") +
       scale_fill_manual(
-        values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1")
-      )})
+        values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", 
+                   "Eating" = "orange", "Foraging" = "purple1")
+      )
+  })
   
   output$ageTextOutput <- renderText({
-    "From the Central Park Squirrel Census CSV from 2018, I explored the relationship between the ages of the squirrels 
-    and the level of activities. I specifically used a stacked bar plot because I was considering 4 variables/activities
-    which when plotting, would cause too much information being presented on a plot if using another type of visualization.
-    In terms of age, squirrels were classified by only two age groups, Adults and Juveniles. Adults being one year plus in 
-    age and juveniles being up to six months old. Now in terms of activities I specifically looked at running, chasing, climbing, 
-    eating, and foraging. From the stacked bar plot, it can be seen that adult squirrels had higher activity levels compared to
-    juvenile squirrels across all the activities that were being factored."
+    if (input$ageVariable == "All") {
+      "The above graph shows the count of activities for both both Adults and Juveniles side by side."
+    } else {
+      paste("The above graph specifically shows the count for squirrels in age group of", input$ageVariable,"'s.")
+    }
   })
   
   output$shiftPlot <- renderPlot({
+    filtered_df <- filter(newdf, if (input$shiftVariable == "All") TRUE 
+                          else Shift == input$shiftVariable)
+    shiftvalues <- filtered_df %>%
+      group_by(Shift) %>%
+      summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"), 
+                Eating = sum(Eating == "true"), Foraging = sum(Foraging == "true"))
+    shiftplot <- shiftvalues %>%
+      gather(key = "Activity", value = "Count", -Shift)
+    
+    shiftplotam <- shiftplot[shiftplot$Shift == "AM", ]
+    shiftplotpm <- shiftplot[shiftplot$Shift == "PM", ]
+    
+    shiftplotamorder <- shiftplotam %>%
+      arrange(desc(Count)) %>%
+      mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+    
+    shiftplotpmorder <- shiftplotpm %>%
+      arrange(desc(Count)) %>%
+      mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+    
     ggplot() +
       geom_bar(data = shiftplotamorder, aes(x = Shift, y = Count, fill = Activity), stat = "identity", position = position_dodge()) +
       geom_bar(data = shiftplotpmorder, aes(x = Shift, y = Count, fill = Activity), stat = "identity", position = position_dodge()) +
-      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) + labs(title = "Activity Levels Between Squirrels (AM and PM)", x = "Shift", y = "Count") +
-      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1"))
+      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) + 
+      labs(title = paste("Activity Levels Between Squirrels (", if (input$shiftVariable == "All") "All" 
+                         else input$shiftVariable, ")", sep = ""), 
+           x = "Shift", y = "Count") +
+      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", 
+                                   "Eating" = "orange", "Foraging" = "purple1"))
   })
   
   output$shiftTextOutput <- renderText({
-    "For the second visualization I'm looking at the relationship between the hours at which the squirrels are being observed and 
-    the activity level of the squirrels. In order to do this visualization, I needed to group all the AM and PM rows in the dataset
-    and then depending on the AM or PM status, I calculated the count for each activity for that specific row. In the visualization
-    it can be seen that Foraging, in both the AM and PM hours, is the highest activity for squirrels. However, when looking at the AM
-    hours, Climbing was the second highest activity with running behind it, and chasing as the least activity done. Looking at the PM
-    hours, Eating is the second highest activity done by the squirrels with Running behind it, while Chasing once again is the least
-    activity done."
+    if (input$shiftVariable == "All") {
+      "The above graph shows the count of activities for squirrles being observed at either AM or PM side by side."
+    } else {
+      paste("The above graph specifically shows the count for squirrels that are being observed during", input$shiftVariable, "shift.")
+    }
   })
   
   output$locationPlot <- renderPlot({
-    ggplot() + geom_bar(data = locationplotaboveorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", 
-                        position = position_dodge()) + 
-      geom_bar(data = locationplotgroundorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", 
-               position = position_dodge()) +theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) +
-      labs(title = "Squirrel Activity Levels Based on Location", x = "Location", y = "Count") +
-      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", "Eating" = "orange", "Foraging" = "purple1"))
+    filtered_df <- filter(newdf, if (input$locationVariable == "All") TRUE 
+                          else Location == input$locationVariable)
+    locationvalues <- filtered_df %>%
+      group_by(Location) %>%
+      summarize(Running = sum(Running == "true"), Chasing = sum(Chasing == "true"), Climbing = sum(Climbing == "true"),
+                Eating = sum(Eating == "true"), Foraging = sum(Foraging == "true"))
+    locationplot <- locationvalues %>%
+      gather(key = "Activity", value = "Count", -Location)
+    
+    locationplotabove <- locationplot[locationplot$Location == "Above Ground", ]
+    locationplotground <- locationplot[locationplot$Location == "Ground Plane", ]
+    
+    locationplotaboveorder <- locationplotabove %>%
+      arrange(desc(Count)) %>%
+      mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+    
+    locationplotgroundorder <- locationplotground %>%
+      arrange(desc(Count)) %>%
+      mutate(Activity = factor(Activity, levels = Activity[order(-Count)]))
+    
+    ggplot() + 
+      geom_bar(data = locationplotaboveorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", position = position_dodge()) + 
+      geom_bar(data = locationplotgroundorder, aes(x = Location, y = Count, fill = Activity), stat = "identity", position = position_dodge()) +
+      theme_minimal(base_size = 16) + theme(text = element_text(face = "bold", size = 20)) +
+      labs(title = paste("Squirrel Activity Levels Based on Location (", if (input$locationVariable == "All") "All" 
+                         else input$locationVariable, ")", sep = ""), 
+           x = "Location", y = "Count") +
+      scale_fill_manual(values = c("Running" = "chartreuse3", "Chasing" = "blue", "Climbing" = "firebrick1", 
+                                   "Eating" = "orange", "Foraging" = "purple1"))
   })
   
   output$locationTextOutput <- renderText({
-    "For the third visualization I'm looking at the relationship between the location at which the squirrels are being located
-    and the activity level of the squirrels. In order to do this visualization, I needed to group all the Above Ground and Ground
-    PLane rows in the dataset and then depending on the status of these values, I calculated the count for each activity for that 
-    specific row/squirrel. In the visualization, when looking at the Above Ground value it can be seen that Climbing was the highest
-    activity level with Running and Eating as a close second between squirrels, and Chasing as the lowest activity level between 
-    squirrels. When looking at the Ground Plane value under the Location variable, it can be noted that Foraging is the activity
-    that squirrels tend to do the most on the ground, with Eating as a close second and running as the third highest activity done by
-    squirrels. It must also be noted that Climbing, which was the most done activity above ground, is the lowest activity done when on
-    the ground level."
+    if (input$locationVariable == "All") {
+      "The above graph shows the count of activities for both both Above Ground and Ground Plane side by side."
+    } else {
+      paste("The above graphs specifically shows the count for squirrels that are", input$locationVariable, "at the point of being observed.")
+    }
   })
 }
+
 shinyApp(ui = ui, server = server)
+
+                                                           
